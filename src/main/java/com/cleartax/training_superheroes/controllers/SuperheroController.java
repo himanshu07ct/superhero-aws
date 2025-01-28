@@ -10,8 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
+import software.amazon.awssdk.services.sqs.model.*;
+
+import java.util.List;
 
 @RestController
 public class SuperheroController {
@@ -55,6 +56,40 @@ public class SuperheroController {
     @GetMapping("/get_message_from_queue")
     public String getMessage() {
         return superheroConsumer.consumeSuperhero();
+    }
+
+
+    @GetMapping("/get_and_delete_message_from_queue")
+    public String getAndDeleteMessage() {
+        // Receive messages from the SQS queue
+        ReceiveMessageRequest receiveRequest = ReceiveMessageRequest.builder()
+                .queueUrl(sqsConfig.getQueueUrl())
+                .maxNumberOfMessages(1) // Receive 1 message at a time
+                .build();
+
+        List<Message> messages = sqsClient.receiveMessage(receiveRequest).messages();
+
+        if (messages.isEmpty()) {
+            return "No messages available in the queue.";
+        }
+
+        // Get the first message
+        Message message = messages.get(0);
+        String messageBody = message.body();
+        String receiptHandle = message.receiptHandle();
+
+        // Process the message (your business logic here)
+        String response = String.format("Message received: %s", messageBody);
+
+        // Delete the message from the queue
+        DeleteMessageRequest deleteRequest = DeleteMessageRequest.builder()
+                .queueUrl(sqsConfig.getQueueUrl())
+                .receiptHandle(receiptHandle)
+                .build();
+
+        sqsClient.deleteMessage(deleteRequest);
+
+        return String.format("%s - The message has been successfully deleted from the queue.", response);
     }
 
 //    @GetMapping("/superhero")

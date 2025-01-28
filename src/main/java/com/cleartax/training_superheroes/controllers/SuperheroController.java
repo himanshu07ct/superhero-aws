@@ -7,7 +7,6 @@ import com.cleartax.training_superheroes.dto.SuperheroRequestBody;
 import com.cleartax.training_superheroes.services.SuperheroConsumer;
 import com.cleartax.training_superheroes.services.SuperheroService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
@@ -39,7 +38,7 @@ public class SuperheroController {
     public String hello(@RequestParam(value = "username", defaultValue = "World") String username) {
         sqsClient.sendMessage(SendMessageRequest.builder()
                 .queueUrl(sqsConfig.getQueueUrl())
-                .messageBody("Himanshu").build());
+                .messageBody("Himanshu ").build());
         return String.format("Hello %s!, %s", username, sqsConfig.getQueuename());
     }
 
@@ -53,7 +52,7 @@ public class SuperheroController {
         return String.format("Message sent to queue with message id %s and superHero %s", result.messageId(), superHeroName);
     }
 
-    @GetMapping("/get_message_from_queue")
+    @GetMapping("/consume")
     public String getMessage() {
         return superheroConsumer.consumeSuperhero();
     }

@@ -38,7 +38,7 @@ public class SuperheroController {
     public String hello(@RequestParam(value = "username", defaultValue = "World") String username) {
         sqsClient.sendMessage(SendMessageRequest.builder()
                 .queueUrl(sqsConfig.getQueueUrl())
-                .messageBody("Himanshu ").build());
+                .messageBody("check ").build());
         return String.format("Hello %s!, %s", username, sqsConfig.getQueuename());
     }
 

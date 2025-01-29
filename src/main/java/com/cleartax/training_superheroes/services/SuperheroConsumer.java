@@ -31,35 +31,37 @@ public class SuperheroConsumer {
 
     @Scheduled(fixedDelay = 5000) // Poll every 5 seconds
     public String consumeSuperhero() {
-        ReceiveMessageRequest request = ReceiveMessageRequest.builder()
-                .queueUrl(sqsConfig.getQueueUrl())
-                .maxNumberOfMessages(10) // Batch size
-                .build();
+        while(true) {
+            ReceiveMessageRequest request = ReceiveMessageRequest.builder()
+                    .queueUrl(sqsConfig.getQueueUrl())
+                    .maxNumberOfMessages(10) // Batch size
+                    .build();
 
-        ReceiveMessageResponse response = sqsClient.receiveMessage(request);
-        List<Message> messages = response.messages();
+            ReceiveMessageResponse response = sqsClient.receiveMessage(request);
+            List<Message> messages = response.messages();
 
-        for (Message message : messages) {
-            try {
-                // Deserialize message body into SuperheroRequestBody
-                SuperheroRequestBody superheroRequestBody = objectMapper.readValue(message.body(), SuperheroRequestBody.class);
+            for (Message message : messages) {
+                try {
+                    // Deserialize message body into SuperheroRequestBody
+                    SuperheroRequestBody superheroRequestBody = objectMapper.readValue(message.body(), SuperheroRequestBody.class);
 
-                // Save to MongoDB
-                Superhero superhero = new Superhero();
-                superhero.setName(superheroRequestBody.getSuperheroName());
-                superhero.setPower(superheroRequestBody.getPower());
-                superhero.setUniverse(superheroRequestBody.getUniverse());
-                superheroRepository.save(superhero);
+                    // Save to MongoDB
+                    Superhero superhero = new Superhero();
+                    superhero.setName(superheroRequestBody.getSuperheroName());
+                    superhero.setPower(superheroRequestBody.getPower());
+                    superhero.setUniverse(superheroRequestBody.getUniverse());
+                    superheroRepository.save(superhero);
 
-                System.out.println("Processed and saved: " + superhero);
+                    System.out.println("Processed and saved: " + superhero);
 
-                // Delete message from the queue after processing
-                sqsClient.deleteMessage(builder ->
-                        builder.queueUrl(sqsConfig.getQueueUrl()).receiptHandle(message.receiptHandle()));
-            } catch (Exception e) {
-                System.err.println("Error processing message: " + e.getMessage());
+                    // Delete message from the queue after processing
+                    sqsClient.deleteMessage(builder ->
+                            builder.queueUrl(sqsConfig.getQueueUrl()).receiptHandle(message.receiptHandle()));
+                } catch (Exception e) {
+                    System.err.println("Error processing message: " + e.getMessage());
+                }
             }
+            return null;
         }
-        return null;
     }
 }
